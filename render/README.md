@@ -10,22 +10,24 @@ Augmentation
 ```
 python3 render/MakePatches.py \
   -o $CADILLAC_DATA_PATH/test/scenes.db \
-  --num_sessions 100 --num_per_session 10 --num_occluding 5 --mode PARALLEL \
+  --num_sessions 10 --num_per_session 10 --num_occluding 5 --mode PARALLEL \
   --clause_main 'WHERE error IS NULL AND dims_L < 10' \
   --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db
 
-python3 render/SetPropertyAsName.py \
-  --in_db_path  $CITY_PATH/data/patches/Sept18-pitch5to35-1K/scenes.db \
-  --out_db_path $CITY_PATH/data/patches/Sept18-pitch5to35-1K/scenes-name.db \
-  --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db \
-  --classes type1 domain
+python3 render/CopyCadProperties.py \
+  --in_db_path  $CADILLAC_DATA_PATH/test/scenes.db \
+  --out_db_path $CADILLAC_DATA_PATH/test/scenes-filled.db \
+  --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db
 
 python3 ~/projects/shuffler/shuffler.py \
-  -i $CITY_PATH/data/patches/Sept18-pitch5to35-1K/scenes-name.db \
-  filterByBorder \
-  expandBoxes --expand_perc 0.2 \
-  exportCarsToDataset --edges distort --target_width 64 --target_height 64 \
-    --patch_db_file $CITY_PATH/data/patches/Sept18-pitch5to35-1K/patches-w55-e04.db 
+  --root $CADILLAC_DATA_PATH/test \
+  -i $CADILLAC_DATA_PATH/test/scenes-filled.db \
+  -o $CADILLAC_DATA_PATH/test/patches-w55-e04.db \
+  filterObjectsAtBorder   \| \
+  expandBoxes --expand_perc 0.2   \| \
+  cropObjects --edges distort --target_width 64 --target_height 64 --media video  \
+    --image_path $CADILLAC_DATA_PATH/test/patches-w55-e04.avi \
+    --mask_path $CADILLAC_DATA_PATH/test/patches-w55-e04mask.avi
 ```
 
 ```

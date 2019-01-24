@@ -160,7 +160,8 @@ def write_visible_mask (patch_dir):
   visible_car = depth_car == depth_all
   un_mask_car = np.logical_not(mask_car)
   visible_car[un_mask_car] = False
-  imwrite(mask_path, visible_car.astype(np.uint8)*255)
+  visible_car = visible_car.astype(np.uint8)*255
+  imwrite(mask_path, visible_car)
   return visible_car, bbox
 
 
