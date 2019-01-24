@@ -306,7 +306,7 @@ if __name__ == "__main__":
   parser.add_argument('--logging', type=int, default=20, choices=[10,20,30,40])
   parser.add_argument('--num_sessions',    type=int, default=5)
   parser.add_argument('--num_per_session', type=int, default=2)
-  parser.add_argument('--num_occluding',   type=int, default=5)
+  parser.add_argument('--num_occluding',   nargs='+', type=int, default=[1,2,3,4,5])
   parser.add_argument('--mode', default='SEQUENTIAL', choices=['SEQUENTIAL', 'PARALLEL'])
   parser.add_argument('--save_blender', action='store_true',
                       help='save .blend render file')
@@ -348,7 +348,8 @@ if __name__ == "__main__":
   for i,job in enumerate(jobs):
     job['job_id'] = i
     job['main_model'] = main_models[i % len(main_models)]
-    job['occl_models'] = sample(occl_models_pool, args.num_occluding)
+    num_occluding = choice(args.num_occluding)  # Randomly pick number of occluding cars.
+    job['occl_models'] = sample(occl_models_pool, num_occluding)
     logging.debug(job['occl_models'])
 
   dataset_writer = DatasetVideoWriter(args.out_db_file,
