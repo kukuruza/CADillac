@@ -8,9 +8,7 @@ from cads.collectionUtilities import safeConnect
 
 if __name__ == "__main__":
 
-  parser = argparse.ArgumentParser('Takes properties from CAD db, '
-     'combines them into a single string, and writes to 2D db. '
-     'It is assumed that "name" field of 2D db is actually a "model_id" of 3D db.')
+  parser = argparse.ArgumentParser('Copies properties from CAD db to rendered db')
   parser.add_argument('--cad_db_path', required=True)
   parser.add_argument('--in_db_path', required=True)
   parser.add_argument('--out_db_path', required=True)

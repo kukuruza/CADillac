@@ -11,6 +11,7 @@ import argparse
 import progressbar
 import sqlite3
 import numpy as np
+import cv2
 from numpy.random import normal, uniform
 from random import shuffle, sample, choice
 from glob import glob
@@ -139,15 +140,16 @@ def place_occluding_vehicles (vehicle0, other_models):
 
 
 def write_visible_mask (patch_dir):
-  '''Write the mask of the car visible area
+  '''Return the mask of the car visible area.
+  Also write the mask for debugging.
   '''
   logging.debug ('making a mask in %s' % patch_dir)
   mask_path = op.join(patch_dir, 'mask.png')
 
   depth_all = imread(op.join(patch_dir, 'depth-all.png'))
   depth_car = imread(op.join(patch_dir, 'depth-car.png'))
-  assert depth_all is not None
-  assert depth_car is not None
+  assert depth_all is not None, op.join(patch_dir, 'depth-all.png')
+  assert depth_car is not None, op.join(patch_dir, 'depth-car.png')
 
   # full main car mask (including occluded parts)
   mask_car = (depth_car < 255*255)
@@ -160,9 +162,67 @@ def write_visible_mask (patch_dir):
   visible_car = depth_car == depth_all
   un_mask_car = np.logical_not(mask_car)
   visible_car[un_mask_car] = False
-  visible_car = visible_car.astype(np.uint8)*255
-  imwrite(mask_path, visible_car)
+  imwrite(mask_path, visible_car.astype(np.uint8)*255)
   return visible_car, bbox
+
+
+def get_road_badness_mask (patch_dir):
+  ''' The area under the road plane is a bad area that should not be seen.
+  '''
+  logging.debug ('making a road badness mask in %s' % patch_dir)
+  badness_path = op.join(patch_dir, 'badness-road.png')
+
+  depth_road = imread(op.join(patch_dir, 'depth-road.png'))
+  assert depth_road is not None, op.join(patch_dir, 'depth-road.png')
+  mask_road = (depth_road < 255*255)
+
+  def write_and_return_all_good_mask():
+    badness_mask = np.zeros(mask_road.shape, dtype=np.uint8)
+    imwrite(badness_path, badness_mask)
+    return badness_mask
+  
+  # Find the area under the road.
+  background_pixels = np.nonzero(mask_road == 0)
+  # If road takes all the image.
+  if len(background_pixels[0]) == 0:
+    return write_and_return_all_good_mask()
+  last_background_pixel = background_pixels[0][-1], background_pixels[1][-1]
+  # If the last background pixel is above the road, there's no badness.
+  if last_background_pixel[0] < mask_road.shape[0] - 1:
+    return write_and_return_all_good_mask()
+  else:
+    # Use cv2.floodFill to fill the whole area around last_background_pixel.
+    seed_point = last_background_pixel[1], last_background_pixel[0]
+    badness_mask = np.zeros((mask_road.shape[0] + 2, mask_road.shape[1] + 2), dtype=np.uint8)
+    cv2.floodFill(mask_road.astype(np.uint8), mask=badness_mask, seedPoint=seed_point, newVal=255)
+    # Make it binary first to work round cv2 undocumented behavior.
+    badness_mask = (badness_mask.astype(np.uint8) > 0) * 255
+    badness_mask = badness_mask[1:-1,1:-1]
+    imwrite(badness_path, badness_mask)
+    return badness_mask > 0
+
+
+def get_building_badness_mask (patch_dir):
+  ''' The area under the road plane is a bad area that should not be seen.
+  '''
+  logging.debug ('making a building badness mask in %s' % patch_dir)
+  badness_path = op.join(patch_dir, 'badness-building.png')
+
+  depth_building = imread(op.join(patch_dir, 'depth-building.png'))
+  assert depth_building is not None, op.join(patch_dir, 'depth-building.png')
+  mask_building = (depth_building < 255*255)
+
+  # Find the parts of the scene on two sides of the building.  
+  _, labels = cv2.connectedComponents(mask_building.astype(np.uint8))
+  logging.info('get_building_badness_mask found %d background components' % labels.max())
+  if labels.max() <= 1:
+    badness_mask = np.zeros(mask_building.shape, dtype=np.uint8)
+  else:
+    # Make it simple and mark both sides as bad.
+    badness_mask = (labels > 0).astype(np.uint8) * 255
+
+  imwrite(badness_path, badness_mask)
+  return badness_mask > 0
 
 
 def get_visible_perc (patch_dir, visible_car):
@@ -187,9 +247,12 @@ def get_visible_perc (patch_dir, visible_car):
 
 def process_scene_dir(patch_dir):
   try:
+    patch = imread(op.join(patch_dir, 'render.png'))[:,:,:3]
     mask, bbox = write_visible_mask (patch_dir)
     visible_perc = get_visible_perc (patch_dir, mask)
-    patch = imread(op.join(patch_dir, 'render.png'))[:,:,:3]
+    road_badness_mask = get_road_badness_mask(patch_dir)
+    building_badness_mask = get_building_badness_mask(patch_dir)
+    badness_mask = np.bitwise_or(road_badness_mask, building_badness_mask)
 
     out_info = json.load(open( op.join(patch_dir, OUT_INFO_NAME) ))
     bbox = mask2bbox(mask)
@@ -200,9 +263,15 @@ def process_scene_dir(patch_dir):
     yaw = out_info['azimuth']
     pitch = out_info['altitude']
     color = out_info['color']
+    # Convention about how to record bad areas.
+    mask = mask.astype(np.uint8) * 255
+    np.putmask(mask, badness_mask, 128)
+    cv2.imwrite(op.join(patch_dir, 'badness.png'), badness_mask.astype(np.uint8) * 255)
+    cv2.imwrite(op.join(patch_dir, 'mask-with-badness.png'), mask)
     return (patch, mask, name, bbox, visible_perc, yaw, pitch, color)
   except:
-    logging.error('A patch failed for some reason in scene %s' % patch_dir)
+    logging.error('A patch at %s failed to process: %s' %
+                  (patch_dir, traceback.format_exc()))
     return None
 
 

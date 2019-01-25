@@ -8,26 +8,44 @@ Augmentation
 ## To make patches:
 
 ```
+# Render.
 python3 render/MakePatches.py \
   -o $CADILLAC_DATA_PATH/test/scenes.db \
   --num_sessions 10 --num_per_session 10 --num_occluding 5 --mode PARALLEL \
   --clause_main 'WHERE error IS NULL AND dims_L < 10' \
   --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db
 
+# Copy CAD info.
 python3 render/CopyCadProperties.py \
   --in_db_path  $CADILLAC_DATA_PATH/test/scenes.db \
   --out_db_path $CADILLAC_DATA_PATH/test/scenes-filled.db \
   --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db
 
+# Crop.
 python3 ~/projects/shuffler/shuffler.py \
-  --root $CADILLAC_DATA_PATH/test \
+  --rootdir $CADILLAC_DATA_PATH/test \
   -i $CADILLAC_DATA_PATH/test/scenes-filled.db \
-  -o $CADILLAC_DATA_PATH/test/patches-w55-e04.db \
+  -o $CADILLAC_DATA_PATH/test/patches-e02-w64.db \
   filterObjectsAtBorder   \| \
   expandBoxes --expand_perc 0.2   \| \
   cropObjects --edges distort --target_width 64 --target_height 64 --media video  \
-    --image_path $CADILLAC_DATA_PATH/test/patches-w55-e04.avi \
-    --mask_path $CADILLAC_DATA_PATH/test/patches-w55-e04mask.avi
+    --image_path $CADILLAC_DATA_PATH/test/patches-e02-w64.avi \
+    --mask_path $CADILLAC_DATA_PATH/test/patches-e02-w64mask.avi
+
+# Write how much background is seen.
+python3 render/RecordInfiniteBack.py \
+  --in_db_path  $CADILLAC_DATA_PATH/test/patches-e02-w64.db \
+  --out_db_path $CADILLAC_DATA_PATH/test/patches-e02-w64.db \
+  --rootdir $CADILLAC_DATA_PATH/test
+
+# Hide background from mask.
+python3 ~/projects/shuffler/shuffler.py \
+  --rootdir $CADILLAC_DATA_PATH/test \
+  -i $CADILLAC_DATA_PATH/test/patches-e02-w64.db \
+  -o $CADILLAC_DATA_PATH/test/patches-e02-w64-repainted.db \
+  repaintMask --media video \
+    --mask_path $CADILLAC_DATA_PATH/test/patches-e02-w64mask-repainted.avi \
+    --mask_mapping_dict "{255: 255, 0: 0, 128: 0}" --overwrite
 ```
 
 ```

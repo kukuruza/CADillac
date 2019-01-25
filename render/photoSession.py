@@ -115,6 +115,8 @@ def make_snapshot (car_sz, render_dir, car_names, params):
     bpy.context.scene.node_tree.nodes['render'].base_path = atcadillac(render_dir)
     bpy.context.scene.node_tree.nodes['depth-all'].base_path = atcadillac(render_dir)
     bpy.context.scene.node_tree.nodes['depth-car'].base_path = atcadillac(render_dir)
+    bpy.context.scene.node_tree.nodes['depth-road'].base_path = atcadillac(render_dir)
+    bpy.context.scene.node_tree.nodes['depth-building'].base_path = atcadillac(render_dir)
 
     # make all cars receive shadows
     logging.info ('materials: %s' % len(bpy.data.materials))
@@ -123,7 +125,7 @@ def make_snapshot (car_sz, render_dir, car_names, params):
 
     # add cars to Cars and Depth-all layers and the main car to Depth-car layer
     for car_name in car_names:
-        for layer_id in range(3):
+        for layer_id in range(5):
             bpy.data.objects[car_name].layers[layer_id] = False
     for car_name in car_names:
         bpy.data.objects[car_name].layers[0] = True
@@ -140,7 +142,7 @@ def make_snapshot (car_sz, render_dir, car_names, params):
         pass
 
     # change the names of output png files
-    for layer_name in ['render', 'depth-all', 'depth-car']:
+    for layer_name in ['render', 'depth-all', 'depth-car', 'depth-road', 'depth-building']:
         os.rename(atcadillac(op.join(render_dir, '%s0001' % layer_name)), 
                   atcadillac(op.join(render_dir, '%s.png' % layer_name)))
 
@@ -167,7 +169,8 @@ def photo_session (job):
 
     # open the blender file
     bpy.context.user_preferences.filepaths.use_relative_paths = False
-    scene_path = atcadillac('scenes/photo-session.blend')
+    scene_path = op.join(op.dirname(os.path.realpath(__file__)), 'resources/photo-session.blend')
+    logging.info('Looking for photo-session.blend at %s' % scene_path)
     bpy.ops.wm.open_mainfile (filepath=scene_path)
 
     if 'render_width' not in job: job['render_width'] = RENDER_WIDTH
