@@ -30,7 +30,6 @@ if __name__ == "__main__":
 
   cursor.execute('SELECT maskfile,objectid FROM objects o LEFT JOIN images i ON o.imagefile = i.imagefile')
   entries = cursor.fetchall()
-  print (entries)
   for maskfile,objectid in entries:
     mask = imreader.imread(maskfile)
     percent = np.count_nonzero(mask == 128) / float(mask.size)

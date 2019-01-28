@@ -21,7 +21,7 @@ from imageio import imread, imwrite
 
 if os.getenv('SHUFFLER_PATH') is None:
   raise Exception('Environmental variable SHUFFLER_PATH is not defined.')
-from interfaceWriter import DatasetVideoWriter
+from interfaceWriter import DatasetWriter
 
 from renderUtil import atcadillac
 
@@ -421,8 +421,8 @@ if __name__ == "__main__":
     job['occl_models'] = sample(occl_models_pool, num_occluding)
     logging.debug(job['occl_models'])
 
-  dataset_writer = DatasetVideoWriter(args.out_db_file,
-      rootdir=op.dirname(args.out_db_file), overwrite=True)
+  dataset_writer = DatasetWriter(args.out_db_file,
+      rootdir=op.dirname(args.out_db_file), overwrite=True, media='video')
 
   # workhorse
   progressbar = progressbar.ProgressBar(max_value=len(jobs))

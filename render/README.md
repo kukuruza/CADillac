@@ -11,7 +11,7 @@ Augmentation
 # Render.
 python3 render/MakePatches.py \
   -o $CADILLAC_DATA_PATH/test/scenes.db \
-  --num_sessions 10 --num_per_session 10 --num_occluding 5 --mode PARALLEL \
+  --num_sessions 10 --num_per_session 3 --num_occluding 1 2 3 4 5 --mode PARALLEL \
   --clause_main 'WHERE error IS NULL AND dims_L < 10' \
   --cad_db_path $CADILLAC_DATA_PATH/CAD/collections_v1.db
 
