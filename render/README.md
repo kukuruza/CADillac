@@ -47,6 +47,30 @@ python3 ~/projects/shuffler/shuffler.py \
   repaintMask --media video \
     --mask_path $PATCHDIR/patches-e02-w64mask-noback.avi \
     --mask_mapping_dict "{255: 255, 0: 0, 128: 0}" --overwrite
+
+# From this point on, no expensive image operations.
+cp $PATCHDIR/patches-repainted.db $PATCHDIR/patches.db
+
+# Count images where background is more than 5% (returns 779)
+sqlite3 $PATCHDIR/patches.db "SELECT COUNT(1) FROM properties WHERE key = 'background' AND CAST(value AS REAL) > 0.05"
+# Remove them.
+sqlite3 $PATCHDIR/patches.db "DELETE FROM objects WHERE objectid IN (SELECT objectid FROM properties WHERE key = 'background' AND CAST(value AS REAL) > 0.05)"
+sqlite3 $PATCHDIR/patches.db "DELETE FROM properties WHERE objectid IN (SELECT objectid FROM properties WHERE key = 'background' AND CAST(value AS REAL) > 0.05)"
+
+# Filter low visibility
+sqlite3 $PATCHDIR/patches.db "DELETE FROM properties WHERE objectid IN (SELECT objectid FROM objects WHERE score < 0.7)"
+sqlite3 $PATCHDIR/patches.db "DELETE FROM objects WHERE score < 0.7"
+
+# Visibility to properties
+sqlite3 $PATCHDIR/patches.db "INSERT INTO properties(objectid,key,value) SELECT objectid,'visibility',score FROM objects"
+sqlite3 $PATCHDIR/patches.db "UPDATE objects SET score=NULL"
+
+# Remove images associated with no objects.
+python3 ~/projects/shuffler/shuffler.py \
+  --rootdir $PATCHDIR \
+  -i $PATCHDIR/patches.db \
+  -o $PATCHDIR/patches.db \
+  filterEmptyImages
 ```
 
 ```
