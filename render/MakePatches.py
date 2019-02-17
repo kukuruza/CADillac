@@ -313,10 +313,10 @@ def run_patches_job (job):
   try:
     command = [os.getenv('BLENDER_PATH'), '--background', '--python',
                op.join(op.dirname(os.path.realpath(__file__)), 'photoSession.py')]
-    # if job['logging'] == 10:
-    #   returncode = subprocess.call (command, shell=False) #, stdout=FNULL, stderr=FNULL)
-    # else:
-    returncode = subprocess.call (command, shell=False, stdout=FNULL)#, stderr=FNULL)
+    if job['logging'] == 10:
+      returncode = subprocess.call (command, shell=False) #, stdout=FNULL, stderr=FNULL)
+    else:
+      returncode = subprocess.call (command, shell=False, stdout=FNULL)#, stderr=FNULL)
     logging.debug ('blender returned code %s' % str(returncode))
     patch_entries = [process_scene_dir(patch_dir) for
             patch_dir in sorted(glob(op.join(WORK_DIR, '??????')))]

@@ -106,11 +106,6 @@ def make_snapshot (car_sz, render_dir, car_names, params):
     # put the building at the edge of the road, opposite to the camera
     bpy.data.objects['-Building'].location.y = params['road_width'] / 2 * (1 if y < 0 else -1)
     
-    # create render dir
-    print (atcadillac(render_dir))
-    if not op.exists(atcadillac(render_dir)):
-        os.makedirs(atcadillac(render_dir))
-
     # nodes to change output paths
     bpy.context.scene.node_tree.nodes['render'].base_path = atcadillac(render_dir)
     bpy.context.scene.node_tree.nodes['depth-all'].base_path = atcadillac(render_dir)
@@ -173,6 +168,12 @@ def photo_session (job):
     logging.info('Looking for photo-session.blend at %s' % scene_path)
     bpy.ops.wm.open_mainfile (filepath=scene_path)
 
+    render_dir = op.join(WORK_DIR, '%06d' % 0)
+    if not op.exists(atcadillac(render_dir)):
+        os.makedirs(atcadillac(render_dir))
+    if job['save_blender']:
+        bpy.ops.wm.save_as_mainfile (filepath=atcadillac(op.join(render_dir, 'out1.blend')))
+
     if 'render_width' not in job: job['render_width'] = RENDER_WIDTH
     if 'render_height' not in job: job['render_height'] = RENDER_HEIGHT
     bpy.context.scene.render.resolution_x = job['render_width']
@@ -197,6 +198,10 @@ def photo_session (job):
     car_sz = sqrt(dims['x']**2 + dims['y']**2 + dims['z']**2)
     for i in range(num_per_session):
         render_dir = op.join(WORK_DIR, '%06d' % i)
+        # create render dir
+        if not op.exists(atcadillac(render_dir)):
+            os.makedirs(atcadillac(render_dir))
+
         use_90turn = job['use_90turn'] if 'use_90turn' in job else False
         logging.info ('use_90turn %s' % str(use_90turn))
         if use_90turn and i % 2 == 1:
@@ -206,10 +211,11 @@ def photo_session (job):
           logging.info ('PREPARED: using azimuth: %.1f - %.1f, pitch: %.1f - %.1f' % 
             (azimuth_low, azimuth_high, pitch_low, pitch_high))
           params = choose_params(azimuth_low, azimuth_high, pitch_low, pitch_high)
-        make_snapshot (car_sz, render_dir, car_names, params)
 
         if job['save_blender']:
-            bpy.ops.wm.save_as_mainfile (filepath=atcadillac(op.join(render_dir, 'out.blend')))
+            bpy.ops.wm.save_as_mainfile (filepath=atcadillac(op.join(render_dir, 'out2.blend')))
+
+        make_snapshot (car_sz, render_dir, car_names, params)
 
         ### write down some labelling info
         out_path = atcadillac(op.join(render_dir, OUT_INFO_NAME))
