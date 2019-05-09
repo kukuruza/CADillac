@@ -24,7 +24,32 @@ collections_v1.db
 ...
 ```
 
+### Visualizations
+
+Below are visualizations of some CAD models from the dataset that satisfy the queries.
+
+Models of length in between 9 and 10 meters
+
+![data preparation pipeline](doc/v1_length_9_to_10.png)
+
+Vans
+
+![data preparation pipeline](doc/v1_van.png)
+
+White Ford
+
+![data preparation pipeline](doc/v1_white_ford.png)
+
+Toyota trucks
+
+![data preparation pipeline](doc/v1_toyota_truck.png)
+
+Military models.
+
+![data preparation pipeline](doc/v1_military.png)
+
 ## License
 
-Apache 2
+The code is licensed under Apache 2.
 
+The CAD models may be repurposed under [fair use guidlines](http://fairuse.stanford.edu/overview/fair-use/what-is-fair-use). More information at [3DWarehouse Terms of Use]( https://3dwarehouse.sketchup.com/tos.html).
