@@ -8,7 +8,7 @@ The repo is in development.
 
 The full set of 3D models can be downloaded from:
 
-https://cmu.box.com/s/541gvrb7x4xkph8vi8xl15uqi8engfys
+https://kilthub.cmu.edu/articles/dataset/CADillac/8262593
 
 The dataset is organized as follows. `1be91e1e521b6756f500cc506a763c18` corresponds to the first out of several dozens of collections. It includes `blend` directory with Blender files, one per model, and `examples` directory with visualizations of these models. File `collections_v1.db` is the database with the information about each model.
 
